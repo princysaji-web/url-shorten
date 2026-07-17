@@ -67,9 +67,15 @@ export async function createLink(
       redirect(`/links/${data.id}`);
     }
 
-    if (error?.code !== "23505") {
-      return { error: error.message ?? "Failed to create link." };
+    if (!error) {
+      continue;
     }
+
+    if (error.code === "23505") {
+      continue;
+    }
+
+    return { error: error.message ?? "Failed to create link." };
   }
 
   return { error: "Could not generate a unique short code. Please try again." };
