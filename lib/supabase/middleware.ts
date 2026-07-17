@@ -1,9 +1,31 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
+import { isValidShortCode } from "@/lib/links/generate-short-code";
 import type { Database } from "@/lib/supabase/database.types";
 
+function redirectDashboardShortCode(request: NextRequest): NextResponse | null {
+  const match = request.nextUrl.pathname.match(/^\/dashboard\/([^/]+)\/?$/);
+  if (!match) {
+    return null;
+  }
+
+  const shortCode = match[1];
+  if (!isValidShortCode(shortCode)) {
+    return null;
+  }
+
+  const url = request.nextUrl.clone();
+  url.pathname = `/${shortCode}`;
+  return NextResponse.redirect(url, 302);
+}
+
 export async function updateSession(request: NextRequest) {
+  const shortCodeRedirect = redirectDashboardShortCode(request);
+  if (shortCodeRedirect) {
+    return shortCodeRedirect;
+  }
+
   let supabaseResponse = NextResponse.next({
     request,
   });
@@ -38,7 +60,9 @@ export async function updateSession(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
   const isAuthRoute = pathname === "/login";
   const isProtectedRoute =
-    pathname.startsWith("/dashboard") || pathname.startsWith("/links");
+    pathname === "/dashboard" ||
+    pathname.startsWith("/dashboard/") ||
+    pathname.startsWith("/links");
 
   if (!user && isProtectedRoute) {
     const url = request.nextUrl.clone();
