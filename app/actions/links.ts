@@ -3,8 +3,11 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
+import { generateShortCode, isValidShortCode } from "@/lib/links/generate-short-code";
 import { parseLinkFormData } from "@/lib/links/validation";
 import { createClient } from "@/lib/supabase/server";
+
+const MAX_SHORT_CODE_ATTEMPTS = 5;
 
 export type LinkActionState = {
   error: string | null;
@@ -34,29 +37,42 @@ export async function createLink(
     };
   }
 
-  const { supabase } = await requireUser();
+  const { supabase, user } = await requireUser();
   const values = parsed.data;
 
-  const { data, error } = await supabase.rpc("create_link", {
-    p_destination_url: values.destinationUrl,
-    p_utm_source: values.utmSource,
-    p_utm_medium: values.utmMedium,
-    p_utm_campaign: values.utmCampaign,
-    p_utm_term: values.utmTerm,
-    p_utm_content: values.utmContent,
-  });
+  for (let attempt = 0; attempt < MAX_SHORT_CODE_ATTEMPTS; attempt++) {
+    const shortCode = generateShortCode();
+    if (!isValidShortCode(shortCode)) {
+      continue;
+    }
 
-  if (error) {
-    return { error: error.message ?? "Failed to create link." };
+    const { data, error } = await supabase
+      .from("links")
+      .insert({
+        short_code: shortCode,
+        destination_url: values.destinationUrl,
+        utm_source: values.utmSource,
+        utm_medium: values.utmMedium,
+        utm_campaign: values.utmCampaign,
+        utm_term: values.utmTerm,
+        utm_content: values.utmContent,
+        created_by: user.id,
+      })
+      .select("id")
+      .single();
+
+    if (!error && data?.id) {
+      revalidatePath("/dashboard");
+      revalidatePath("/links");
+      redirect(`/links/${data.id}`);
+    }
+
+    if (error?.code !== "23505") {
+      return { error: error.message ?? "Failed to create link." };
+    }
   }
 
-  if (!data?.id) {
-    return { error: "Failed to create link." };
-  }
-
-  revalidatePath("/dashboard");
-  revalidatePath("/links");
-  redirect(`/links/${data.id}`);
+  return { error: "Could not generate a unique short code. Please try again." };
 }
 
 export async function updateLink(
