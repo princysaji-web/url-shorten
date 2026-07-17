@@ -1,0 +1,2 @@
+[functions.create-link]
+verify_jwt = true
