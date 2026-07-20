@@ -21,18 +21,18 @@ export function buildShortUrl(shortCode: string): string {
   return `${getShortLinkDomain()}/${shortCode}`;
 }
 
-/** Where invite/setup links should land after Supabase verify. */
-export function getAuthCallbackUrl(nextPath = "/auth/set-password"): string {
-  const next = nextPath.startsWith("/") ? nextPath : `/${nextPath}`;
-  return `${getShortLinkDomain()}/auth/callback?next=${encodeURIComponent(next)}`;
-}
-
 /**
- * Supabase generateLink embeds Site URL (often localhost) into redirect_to.
- * Rewrite it to our public app origin before sharing the link.
+ * App-owned member setup URL. Verifies the token on our /auth/callback
+ * so Supabase Site URL (localhost) never controls the redirect.
+ * Uses recovery type — never invite emails.
  */
-export function withAppAuthRedirect(actionLink: string): string {
-  const url = new URL(actionLink);
-  url.searchParams.set("redirect_to", getAuthCallbackUrl());
+export function buildMemberSetupLink(
+  tokenHash: string,
+  type: "recovery" | "invite" = "recovery",
+): string {
+  const url = new URL("/auth/callback", getShortLinkDomain());
+  url.searchParams.set("token_hash", tokenHash);
+  url.searchParams.set("type", type);
+  url.searchParams.set("next", "/auth/set-password");
   return url.toString();
 }

@@ -64,8 +64,7 @@ export function AddMemberForm({
         </div>
       </div>
       <p className="text-xs text-muted-foreground">
-        No invitation email is sent. For new users, you get a setup link they
-        use to set their own password.
+        No email is sent. Copy the password setup link and share it yourself.
       </p>
       {state.error ? (
         <Alert variant="destructive">
@@ -79,7 +78,7 @@ export function AddMemberForm({
       ) : null}
       {state.setupLink ? (
         <div className="space-y-2 rounded-md border bg-background p-3">
-          <Label htmlFor="setup-link">Password setup link</Label>
+          <Label htmlFor="setup-link">Password setup link (share manually)</Label>
           <div className="flex flex-col gap-2 sm:flex-row">
             <Input
               id="setup-link"
@@ -100,8 +99,8 @@ export function AddMemberForm({
             </Button>
           </div>
           <p className="text-xs text-muted-foreground">
-            Share this link privately. They open it, set a password, then sign
-            in.
+            They open this link, set their password, then sign in. Nothing is
+            emailed by the app or Supabase.
           </p>
         </div>
       ) : null}

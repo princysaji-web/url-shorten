@@ -8,7 +8,7 @@ import {
   ACTIVE_ORG_COOKIE,
   slugifyOrgName,
 } from "@/lib/organizations/context";
-import { getAuthCallbackUrl, getShortLinkDomain, withAppAuthRedirect } from "@/lib/links/short-url";
+import { buildMemberSetupLink, getShortLinkDomain } from "@/lib/links/short-url";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import type { OrgRole } from "@/lib/supabase/database.types";
@@ -161,43 +161,48 @@ export async function addOrganizationMember(
     return { error: "Service unavailable." };
   }
 
-  const redirectTo = getAuthCallbackUrl();
   let userId = await findAuthUserIdByEmail(admin, email);
   let setupLink: string | null = null;
 
   if (!userId) {
-    // Creates the auth user and returns a setup link — does not send email.
-    const { data: linkData, error: linkError } =
-      await admin.auth.admin.generateLink({
-        type: "invite",
+    // No inviteUserByEmail / no invite emails.
+    // 1) createUser (silent)  2) recovery link for them to set password on our app.
+    const temporaryPassword = `${crypto.randomUUID()}A!a1`;
+    const { data: created, error: createError } =
+      await admin.auth.admin.createUser({
         email,
-        options: {
-          data: {
-            organization_id: organizationId,
-            invited_role: role,
-          },
-          redirectTo,
+        password: temporaryPassword,
+        email_confirm: true,
+        user_metadata: {
+          organization_id: organizationId,
+          invited_role: role,
         },
       });
 
-    if (linkError || !linkData.user) {
+    if (createError || !created.user) {
       return {
-        error: linkError?.message ?? "Failed to create member account.",
+        error: createError?.message ?? "Failed to create member account.",
       };
     }
 
-    userId = linkData.user.id;
-    const rawLink = linkData.properties?.action_link ?? null;
+    userId = created.user.id;
 
-    if (!rawLink) {
+    const { data: linkData, error: linkError } =
+      await admin.auth.admin.generateLink({
+        type: "recovery",
+        email,
+      });
+
+    const tokenHash = linkData?.properties?.hashed_token;
+    if (linkError || !tokenHash) {
       return {
         error:
-          "Member was prepared but no setup link was returned. Check Supabase Auth settings.",
+          linkError?.message ??
+          "Account created, but password setup link could not be generated.",
       };
     }
 
-    // generateLink often embeds Site URL (localhost); force our public domain.
-    setupLink = withAppAuthRedirect(rawLink);
+    setupLink = buildMemberSetupLink(tokenHash, "recovery");
   }
 
   const { data: existingMember } = await admin
@@ -228,7 +233,7 @@ export async function addOrganizationMember(
   if (setupLink) {
     return {
       error: null,
-      success: `Added ${email}. Share this setup link so they can set their own password (no email was sent).`,
+      success: `Added ${email}. No email was sent — copy the setup link below and share it so they can set their password.`,
       setupLink,
     };
   }

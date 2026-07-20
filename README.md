@@ -34,16 +34,12 @@ NEXT_PUBLIC_SHORT_LINK_DOMAIN=https://www.cs.net
 
 `NEXT_PUBLIC_SHORT_LINK_DOMAIN` is the public app origin for short URLs and member password-setup redirects.
 
-### Supabase Auth URL settings (required for setup links)
+### Supabase Auth URL settings
 
-In Supabase Dashboard → Authentication → URL configuration:
+Member setup links are app-owned (`/auth/callback?token_hash=…`) and no longer use
+`supabase.co/auth/v1/verify`, so **Site URL localhost does not affect them**.
 
-1. Set **Site URL** to the same value as `NEXT_PUBLIC_SHORT_LINK_DOMAIN` (not `http://localhost:3000`).
-2. Add to **Redirect URLs**:
-   - `{NEXT_PUBLIC_SHORT_LINK_DOMAIN}/**`
-   - `{NEXT_PUBLIC_SHORT_LINK_DOMAIN}/auth/callback`
-
-If Site URL stays on localhost, Supabase may reject non-localhost redirects after verify. The app also rewrites `redirect_to` on generated setup links, but the allow-list must include your public domain.
+Still set **Site URL** to `NEXT_PUBLIC_SHORT_LINK_DOMAIN` in Supabase for other auth emails.
 
 ## Database setup
 

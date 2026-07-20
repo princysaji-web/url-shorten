@@ -1,10 +1,9 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
+  buildMemberSetupLink,
   buildShortUrl,
-  getAuthCallbackUrl,
   getShortLinkDomain,
-  withAppAuthRedirect,
 } from "@/lib/links/short-url";
 
 describe("getShortLinkDomain", () => {
@@ -50,25 +49,23 @@ describe("buildShortUrl", () => {
   });
 });
 
-describe("withAppAuthRedirect", () => {
+describe("buildMemberSetupLink", () => {
   afterEach(() => {
     vi.unstubAllEnvs();
   });
 
-  it("replaces localhost redirect_to with the public app callback", () => {
+  it("builds an app-owned callback URL that never uses supabase verify", () => {
     vi.stubEnv(
       "NEXT_PUBLIC_SHORT_LINK_DOMAIN",
       "https://url-shorten-sooty.vercel.app",
     );
 
-    const rewritten = withAppAuthRedirect(
-      "https://pleflwokbfdbzbmksgrj.supabase.co/auth/v1/verify?token=abc&type=invite&redirect_to=http://localhost:3000",
-    );
+    const link = buildMemberSetupLink("abc123token");
 
-    expect(rewritten).toContain(
-      "redirect_to=" +
-        encodeURIComponent(getAuthCallbackUrl()),
+    expect(link).toBe(
+      "https://url-shorten-sooty.vercel.app/auth/callback?token_hash=abc123token&type=recovery&next=%2Fauth%2Fset-password",
     );
-    expect(rewritten).not.toContain("localhost");
+    expect(link).not.toContain("supabase.co");
+    expect(link).not.toContain("localhost");
   });
 });
