@@ -40,7 +40,7 @@ export default async function LinksPage({
 
   const { active } = await getActiveOrganizationContext(user.id);
   if (!active) {
-    redirect("/organizations/new");
+    redirect("/dashboard");
   }
 
   let query = supabase

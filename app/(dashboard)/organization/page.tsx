@@ -25,7 +25,7 @@ export default async function OrganizationPage() {
 
   const { active } = await getActiveOrganizationContext(user.id);
   if (!active) {
-    redirect("/organizations/new");
+    redirect("/dashboard");
   }
 
   const orgId = active.organization.id;

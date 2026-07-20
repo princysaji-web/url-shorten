@@ -29,8 +29,31 @@ export default async function DashboardPage() {
   }
 
   const { active } = await getActiveOrganizationContext(user.id);
+
   if (!active) {
-    redirect("/organizations/new");
+    return (
+      <div className="mx-auto max-w-lg space-y-6 py-8">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
+          <p className="text-muted-foreground">
+            Create an organization to start sharing short links with your team.
+          </p>
+        </div>
+        <Card>
+          <CardHeader>
+            <CardTitle>No organization yet</CardTitle>
+            <CardDescription>
+              You need an organization before you can create or view links.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button render={<Link href="/organizations/new" />}>
+              Create organization
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
   const orgId = active.organization.id;

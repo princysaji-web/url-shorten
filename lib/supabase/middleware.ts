@@ -77,6 +77,14 @@ export async function updateSession(request: NextRequest) {
   if (user && isAuthRoute) {
     const url = request.nextUrl.clone();
     url.pathname = "/dashboard";
+    url.search = "";
+    return NextResponse.redirect(url);
+  }
+
+  // Logged-in users hitting `/` always land on the dashboard
+  if (user && pathname === "/") {
+    const url = request.nextUrl.clone();
+    url.pathname = "/dashboard";
     return NextResponse.redirect(url);
   }
 
