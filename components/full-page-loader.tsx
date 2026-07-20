@@ -1,7 +1,9 @@
+"use client";
+
 import { Spinner } from "@/components/ui/spinner";
 import { cn } from "@/lib/utils";
 
-export function LoadingState({
+export function FullPageLoader({
   label = "Loading…",
   className,
 }: {
@@ -11,7 +13,7 @@ export function LoadingState({
   return (
     <div
       className={cn(
-        "flex min-h-[50vh] w-full flex-col items-center justify-center gap-3 text-muted-foreground",
+        "fixed inset-0 z-50 flex flex-col items-center justify-center gap-3 bg-background/70 backdrop-blur-[1px]",
         className,
       )}
       role="status"
@@ -19,7 +21,7 @@ export function LoadingState({
       aria-busy="true"
     >
       <Spinner className="size-8 text-foreground" label={label} />
-      <p className="text-sm">{label}</p>
+      <p className="text-sm text-muted-foreground">{label}</p>
     </div>
   );
 }

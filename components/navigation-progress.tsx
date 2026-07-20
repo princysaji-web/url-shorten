@@ -6,7 +6,7 @@ import { usePathname, useSearchParams } from "next/navigation";
 import { cn } from "@/lib/utils";
 
 /**
- * Top progress bar for client navigations (link clicks / back-forward).
+ * Top progress bar for client navigations and form submissions.
  */
 export function NavigationProgress() {
   const pathname = usePathname();
@@ -14,12 +14,23 @@ export function NavigationProgress() {
   const [visible, setVisible] = useState(false);
   const timeoutRef = useRef<number | null>(null);
 
-  useEffect(() => {
+  function start() {
+    setVisible(true);
+    if (timeoutRef.current) window.clearTimeout(timeoutRef.current);
+    timeoutRef.current = window.setTimeout(() => setVisible(false), 10000);
+  }
+
+  function stop() {
     setVisible(false);
     if (timeoutRef.current) {
       window.clearTimeout(timeoutRef.current);
       timeoutRef.current = null;
     }
+  }
+
+  useEffect(() => {
+    stop();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname, searchParams]);
 
   useEffect(() => {
@@ -50,14 +61,21 @@ export function NavigationProgress() {
         return;
       }
 
-      setVisible(true);
-      if (timeoutRef.current) window.clearTimeout(timeoutRef.current);
-      timeoutRef.current = window.setTimeout(() => setVisible(false), 8000);
+      start();
+    }
+
+    function onSubmit(event: Event) {
+      const form = event.target as HTMLFormElement | null;
+      if (!form || form.tagName !== "FORM") return;
+      // Native/local-only forms without action still navigate via server actions
+      start();
     }
 
     document.addEventListener("click", onClick, true);
+    document.addEventListener("submit", onSubmit, true);
     return () => {
       document.removeEventListener("click", onClick, true);
+      document.removeEventListener("submit", onSubmit, true);
       if (timeoutRef.current) window.clearTimeout(timeoutRef.current);
     };
   }, []);
@@ -65,12 +83,14 @@ export function NavigationProgress() {
   return (
     <div
       className={cn(
-        "pointer-events-none fixed inset-x-0 top-0 z-[100] h-0.5 overflow-hidden transition-opacity",
+        "pointer-events-none fixed inset-x-0 top-0 z-[100] h-0.5 overflow-hidden transition-opacity duration-150",
         visible ? "opacity-100" : "opacity-0",
       )}
-      aria-hidden
+      aria-hidden={!visible}
+      role="progressbar"
+      aria-busy={visible}
     >
-      <div className="h-full w-1/3 bg-primary [animation:nav-progress_1s_ease-in-out_infinite]" />
+      <div className="h-full w-1/3 animate-[nav-progress_1s_ease-in-out_infinite] bg-primary" />
     </div>
   );
 }

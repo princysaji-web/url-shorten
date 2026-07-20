@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { LinksTable } from "@/components/links/links-table";
+import { PendingSubmitButton } from "@/components/pending-submit-button";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -109,9 +110,11 @@ export default async function LinksPage({
             <option value="inactive">Inactive</option>
           </select>
         </div>
-        <Button type="submit" variant="secondary">
-          Apply
-        </Button>
+        <PendingSubmitButton
+          variant="secondary"
+          idleLabel="Apply"
+          pendingLabel="Filtering…"
+        />
       </form>
 
       {error ? (

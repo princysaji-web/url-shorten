@@ -8,6 +8,7 @@ import {
   updateMemberRole,
 } from "@/app/actions/organizations";
 import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
 import type { OrgRole } from "@/lib/supabase/database.types";
 
 export function MemberActions({
@@ -60,7 +61,8 @@ export function MemberActions({
           });
         }}
       >
-        Remove
+        {pending ? <Spinner label="Removing" /> : null}
+        {pending ? "Removing…" : "Remove"}
       </Button>
     </div>
   );

@@ -22,6 +22,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Spinner } from "@/components/ui/spinner";
 import {
   Table,
   TableBody,
@@ -91,8 +92,8 @@ function LinkRowActions({ link }: { link: LinkWithClicks }) {
             });
           }}
         >
-          <Trash2 />
-          Delete
+          {pending ? <Spinner label="Deleting" /> : <Trash2 />}
+          {pending ? "Deleting…" : "Delete"}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
