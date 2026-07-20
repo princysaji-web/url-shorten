@@ -1,25 +1,15 @@
 "use client";
 
 import { useActionState } from "react";
-import { useFormStatus } from "react-dom";
 
 import type { LinkActionState } from "@/app/actions/links";
+import { PendingSubmitButton } from "@/components/pending-submit-button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { Link } from "@/lib/supabase/database.types";
 
 const initialState: LinkActionState = { error: null };
-
-function SubmitButton({ label }: { label: string }) {
-  const { pending } = useFormStatus();
-  return (
-    <Button type="submit" disabled={pending}>
-      {pending ? "Saving…" : label}
-    </Button>
-  );
-}
 
 type LinkFormProps = {
   action: (
@@ -128,7 +118,7 @@ export function LinkForm({ action, link, submitLabel }: LinkFormProps) {
         </Alert>
       ) : null}
 
-      <SubmitButton label={submitLabel} />
+      <PendingSubmitButton idleLabel={submitLabel} pendingLabel="Saving…" />
     </form>
   );
 }

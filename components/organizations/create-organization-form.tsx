@@ -1,27 +1,17 @@
 "use client";
 
 import { useActionState } from "react";
-import { useFormStatus } from "react-dom";
 
 import {
   createOrganization,
   type OrgActionState,
 } from "@/app/actions/organizations";
+import { PendingSubmitButton } from "@/components/pending-submit-button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 const initialState: OrgActionState = { error: null };
-
-function SubmitButton() {
-  const { pending } = useFormStatus();
-  return (
-    <Button type="submit" disabled={pending}>
-      {pending ? "Creating…" : "Create organization"}
-    </Button>
-  );
-}
 
 export function CreateOrganizationForm() {
   const [state, formAction] = useActionState(createOrganization, initialState);
@@ -50,7 +40,10 @@ export function CreateOrganizationForm() {
           <AlertDescription>{state.error}</AlertDescription>
         </Alert>
       ) : null}
-      <SubmitButton />
+      <PendingSubmitButton
+        idleLabel="Create organization"
+        pendingLabel="Creating…"
+      />
     </form>
   );
 }

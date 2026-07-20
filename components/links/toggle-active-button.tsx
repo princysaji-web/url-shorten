@@ -14,6 +14,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { Spinner } from "@/components/ui/spinner";
 
 export function ToggleActiveButton({
   linkId,
@@ -66,6 +67,7 @@ export function ToggleActiveButton({
             onClick={confirm}
             disabled={pending}
           >
+            {pending ? <Spinner label="Updating" /> : null}
             {pending ? "Updating…" : isActive ? "Disable link" : "Enable link"}
           </Button>
         </DialogFooter>

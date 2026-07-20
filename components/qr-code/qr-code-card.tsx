@@ -14,6 +14,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Spinner } from "@/components/ui/spinner";
 
 export function QrCodeCard({
   shortUrl,
@@ -102,7 +103,8 @@ export function QrCodeCard({
               height={280}
             />
           ) : (
-            <div className="flex h-[280px] w-[280px] items-center justify-center text-sm text-muted-foreground">
+            <div className="flex h-[280px] w-[280px] flex-col items-center justify-center gap-3 text-sm text-muted-foreground">
+              <Spinner className="size-6" label="Generating QR" />
               Generating QR…
             </div>
           )}

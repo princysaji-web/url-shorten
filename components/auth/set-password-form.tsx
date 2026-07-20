@@ -1,25 +1,14 @@
 "use client";
 
 import { useActionState } from "react";
-import { useFormStatus } from "react-dom";
 
 import { setPassword, type SetPasswordState } from "@/app/actions/auth";
+import { PendingSubmitButton } from "@/components/pending-submit-button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 const initialState: SetPasswordState = { error: null };
-
-function SubmitButton() {
-  const { pending } = useFormStatus();
-
-  return (
-    <Button type="submit" className="w-full" disabled={pending}>
-      {pending ? "Saving…" : "Set password"}
-    </Button>
-  );
-}
 
 export function SetPasswordForm() {
   const [state, formAction] = useActionState(setPassword, initialState);
@@ -53,7 +42,11 @@ export function SetPasswordForm() {
           <AlertDescription>{state.error}</AlertDescription>
         </Alert>
       ) : null}
-      <SubmitButton />
+      <PendingSubmitButton
+        className="w-full"
+        idleLabel="Set password"
+        pendingLabel="Saving…"
+      />
     </form>
   );
 }
