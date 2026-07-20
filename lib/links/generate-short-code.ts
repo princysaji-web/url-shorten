@@ -18,6 +18,8 @@ export const RESERVED_SHORT_CODES = new Set([
   "links",
   "api",
   "auth",
+  "organization",
+  "organizations",
   "favicon.ico",
   "_next",
   "public",

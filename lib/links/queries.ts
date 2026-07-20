@@ -37,10 +37,14 @@ export function withClickCounts(
   }));
 }
 
-export async function getDashboardStats(supabase: SupabaseServerClient) {
+export async function getDashboardStats(
+  supabase: SupabaseServerClient,
+  organizationId: string,
+) {
   const { data: links, error } = await supabase
     .from("links")
-    .select("id, is_active");
+    .select("id, is_active")
+    .eq("organization_id", organizationId);
 
   if (error || !links) {
     return {

@@ -28,6 +28,8 @@ describe("isValidShortCode", () => {
     expect(isValidShortCode("login")).toBe(false);
     expect(isValidShortCode("dashboard")).toBe(false);
     expect(isValidShortCode("links")).toBe(false);
+    expect(isValidShortCode("organization")).toBe(false);
+    expect(isValidShortCode("auth")).toBe(false);
   });
 
   it("rejects invalid characters", () => {

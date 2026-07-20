@@ -2,9 +2,11 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Link2, LayoutDashboard, Plus } from "lucide-react";
+import { useTransition } from "react";
+import { Building2, Link2, LayoutDashboard, Plus } from "lucide-react";
 
 import { logout } from "@/app/actions/auth";
+import { setActiveOrganization } from "@/app/actions/organizations";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -12,10 +14,26 @@ const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/links", label: "Links", icon: Link2 },
   { href: "/links/new", label: "Create Link", icon: Plus },
+  { href: "/organization", label: "Organization", icon: Building2 },
 ];
 
-export function DashboardNav({ email }: { email: string | undefined }) {
+export type NavOrganization = {
+  id: string;
+  name: string;
+  slug: string;
+};
+
+export function DashboardNav({
+  email,
+  organizations,
+  activeOrganizationId,
+}: {
+  email: string | undefined;
+  organizations: NavOrganization[];
+  activeOrganizationId: string | null;
+}) {
   const pathname = usePathname();
+  const [pending, startTransition] = useTransition();
 
   return (
     <header className="border-b bg-background">
@@ -55,7 +73,35 @@ export function DashboardNav({ email }: { email: string | undefined }) {
           </nav>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
+          {organizations.length > 0 ? (
+            <select
+              id="active-org"
+              aria-label="Organization"
+              disabled={pending}
+              value={activeOrganizationId ?? undefined}
+              className="flex h-9 max-w-[12rem] rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:opacity-50"
+              onChange={(event) => {
+                const orgId = event.target.value;
+                startTransition(() => {
+                  void setActiveOrganization(orgId);
+                });
+              }}
+            >
+              {organizations.map((org) => (
+                <option key={org.id} value={org.id}>
+                  {org.name}
+                </option>
+              ))}
+            </select>
+          ) : null}
+          <Button
+            variant="outline"
+            size="sm"
+            render={<Link href="/organizations/new" />}
+          >
+            New org
+          </Button>
           {email ? (
             <span className="hidden text-sm text-muted-foreground sm:inline">
               {email}

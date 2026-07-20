@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 
 import { LinksTable } from "@/components/links/links-table";
 import { Button } from "@/components/ui/button";
@@ -8,6 +9,7 @@ import {
   getClickCountsByLinkIds,
   withClickCounts,
 } from "@/lib/links/queries";
+import { getActiveOrganizationContext } from "@/lib/organizations/context";
 import { createClient } from "@/lib/supabase/server";
 
 const PAGE_SIZE = 20;
@@ -29,9 +31,22 @@ export default async function LinksPage({
   const to = from + PAGE_SIZE - 1;
 
   const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    redirect("/login");
+  }
+
+  const { active } = await getActiveOrganizationContext(user.id);
+  if (!active) {
+    redirect("/organizations/new");
+  }
+
   let query = supabase
     .from("links")
     .select("*", { count: "exact" })
+    .eq("organization_id", active.organization.id)
     .order("created_at", { ascending: false })
     .range(from, to);
 

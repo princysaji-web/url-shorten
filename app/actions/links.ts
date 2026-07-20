@@ -3,8 +3,10 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
+import { invalidateCachedLink } from "@/lib/cache/link-cache";
 import { generateShortCode, isValidShortCode } from "@/lib/links/generate-short-code";
 import { parseLinkFormData } from "@/lib/links/validation";
+import { getActiveOrganizationContext } from "@/lib/organizations/context";
 import { createClient } from "@/lib/supabase/server";
 
 const MAX_SHORT_CODE_ATTEMPTS = 5;
@@ -38,6 +40,11 @@ export async function createLink(
   }
 
   const { supabase, user } = await requireUser();
+  const { active } = await getActiveOrganizationContext(user.id);
+  if (!active) {
+    return { error: "Join or create an organization before creating links." };
+  }
+
   const values = parsed.data;
 
   for (let attempt = 0; attempt < MAX_SHORT_CODE_ATTEMPTS; attempt++) {
@@ -57,6 +64,7 @@ export async function createLink(
         utm_term: values.utmTerm,
         utm_content: values.utmContent,
         created_by: user.id,
+        organization_id: active.organization.id,
       })
       .select("id")
       .single();
@@ -96,7 +104,7 @@ export async function updateLink(
   const { supabase } = await requireUser();
   const values = parsed.data;
 
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from("links")
     .update({
       destination_url: values.destinationUrl,
@@ -107,10 +115,16 @@ export async function updateLink(
       utm_content: values.utmContent,
       is_active: values.isActive,
     })
-    .eq("id", linkId);
+    .eq("id", linkId)
+    .select("short_code")
+    .single();
 
   if (error) {
     return { error: error.message };
+  }
+
+  if (data?.short_code) {
+    invalidateCachedLink(data.short_code);
   }
 
   revalidatePath("/dashboard");
@@ -122,17 +136,46 @@ export async function updateLink(
 export async function setLinkActive(linkId: string, isActive: boolean) {
   const { supabase } = await requireUser();
 
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from("links")
     .update({ is_active: isActive })
-    .eq("id", linkId);
+    .eq("id", linkId)
+    .select("short_code")
+    .single();
 
   if (error) {
     return { error: error.message };
   }
 
+  if (data?.short_code) {
+    invalidateCachedLink(data.short_code);
+  }
+
   revalidatePath("/dashboard");
   revalidatePath("/links");
   revalidatePath(`/links/${linkId}`);
+  return { error: null };
+}
+
+export async function deleteLink(linkId: string) {
+  const { supabase } = await requireUser();
+
+  const { data, error } = await supabase
+    .from("links")
+    .delete()
+    .eq("id", linkId)
+    .select("short_code")
+    .single();
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  if (data?.short_code) {
+    invalidateCachedLink(data.short_code);
+  }
+
+  revalidatePath("/dashboard");
+  revalidatePath("/links");
   return { error: null };
 }

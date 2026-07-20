@@ -1,6 +1,11 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { buildShortUrl, getShortLinkDomain } from "@/lib/links/short-url";
+import {
+  buildShortUrl,
+  getAuthCallbackUrl,
+  getShortLinkDomain,
+  withAppAuthRedirect,
+} from "@/lib/links/short-url";
 
 describe("getShortLinkDomain", () => {
   afterEach(() => {
@@ -42,5 +47,28 @@ describe("buildShortUrl", () => {
     expect(buildShortUrl("NA2cHRa")).toBe(
       "https://url-shorten-sooty.vercel.app/NA2cHRa",
     );
+  });
+});
+
+describe("withAppAuthRedirect", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it("replaces localhost redirect_to with the public app callback", () => {
+    vi.stubEnv(
+      "NEXT_PUBLIC_SHORT_LINK_DOMAIN",
+      "https://url-shorten-sooty.vercel.app",
+    );
+
+    const rewritten = withAppAuthRedirect(
+      "https://pleflwokbfdbzbmksgrj.supabase.co/auth/v1/verify?token=abc&type=invite&redirect_to=http://localhost:3000",
+    );
+
+    expect(rewritten).toContain(
+      "redirect_to=" +
+        encodeURIComponent(getAuthCallbackUrl()),
+    );
+    expect(rewritten).not.toContain("localhost");
   });
 });

@@ -59,12 +59,15 @@ export async function updateSession(request: NextRequest) {
 
   const pathname = request.nextUrl.pathname;
   const isAuthRoute = pathname === "/login";
+  const isAuthFlowRoute = pathname.startsWith("/auth/");
   const isProtectedRoute =
     pathname === "/dashboard" ||
     pathname.startsWith("/dashboard/") ||
-    pathname.startsWith("/links");
+    pathname.startsWith("/links") ||
+    pathname.startsWith("/organization") ||
+    pathname === "/organizations/new";
 
-  if (!user && isProtectedRoute) {
+  if (!user && (isProtectedRoute || pathname === "/auth/set-password")) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     url.searchParams.set("next", pathname);
@@ -75,6 +78,11 @@ export async function updateSession(request: NextRequest) {
     const url = request.nextUrl.clone();
     url.pathname = "/dashboard";
     return NextResponse.redirect(url);
+  }
+
+  // Allow /auth/callback without forcing login redirect
+  if (!user && isAuthFlowRoute && pathname !== "/auth/set-password") {
+    return supabaseResponse;
   }
 
   return supabaseResponse;

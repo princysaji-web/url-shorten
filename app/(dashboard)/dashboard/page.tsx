@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 
 import { LinksTable } from "@/components/links/links-table";
 import { Button } from "@/components/ui/button";
@@ -14,15 +15,31 @@ import {
   getDashboardStats,
   withClickCounts,
 } from "@/lib/links/queries";
+import { getActiveOrganizationContext } from "@/lib/organizations/context";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
-  const stats = await getDashboardStats(supabase);
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/login");
+  }
+
+  const { active } = await getActiveOrganizationContext(user.id);
+  if (!active) {
+    redirect("/organizations/new");
+  }
+
+  const orgId = active.organization.id;
+  const stats = await getDashboardStats(supabase, orgId);
 
   const { data: recentLinks } = await supabase
     .from("links")
     .select("*")
+    .eq("organization_id", orgId)
     .order("created_at", { ascending: false })
     .limit(10);
 
@@ -46,7 +63,7 @@ export default async function DashboardPage() {
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
           <p className="text-muted-foreground">
-            Overview of your short links and click activity.
+            Shared overview for {active.organization.name}.
           </p>
         </div>
         <Button render={<Link href="/links/new" />}>Create New Link</Button>
@@ -66,7 +83,9 @@ export default async function DashboardPage() {
       <Card>
         <CardHeader>
           <CardTitle>Recent links</CardTitle>
-          <CardDescription>Your 10 most recently created short links.</CardDescription>
+          <CardDescription>
+            The 10 most recently created short links in this organization.
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <LinksTable

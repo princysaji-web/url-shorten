@@ -20,3 +20,19 @@ export function getShortLinkDomain(): string {
 export function buildShortUrl(shortCode: string): string {
   return `${getShortLinkDomain()}/${shortCode}`;
 }
+
+/** Where invite/setup links should land after Supabase verify. */
+export function getAuthCallbackUrl(nextPath = "/auth/set-password"): string {
+  const next = nextPath.startsWith("/") ? nextPath : `/${nextPath}`;
+  return `${getShortLinkDomain()}/auth/callback?next=${encodeURIComponent(next)}`;
+}
+
+/**
+ * Supabase generateLink embeds Site URL (often localhost) into redirect_to.
+ * Rewrite it to our public app origin before sharing the link.
+ */
+export function withAppAuthRedirect(actionLink: string): string {
+  const url = new URL(actionLink);
+  url.searchParams.set("redirect_to", getAuthCallbackUrl());
+  return url.toString();
+}
